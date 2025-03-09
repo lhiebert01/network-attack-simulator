@@ -86,6 +86,8 @@ if "last_update" not in st.session_state:
     st.session_state.last_update = datetime.now()
 if "selected_time_range" not in st.session_state:
     st.session_state.selected_time_range = "15m"
+if "analyzer_url" not in st.session_state:
+    st.session_state.analyzer_url = "https://genai-network-analyzer.onrender.com/"
 
 # Header
 st.markdown("<h1 class='main-header'>Network Attack Simulator</h1>", unsafe_allow_html=True)
@@ -107,8 +109,9 @@ with st.sidebar:
     if st.button("Open Network Log Analyzer", type="primary"):
         # Open in a new window automatically
         import webbrowser
-        webbrowser.open_new_tab("http://localhost:8001")
-        st.success("Network Log Analyzer opened in a new window")
+        analyzer_url = st.session_state.get("analyzer_url", "https://genai-network-analyzer.onrender.com/")
+        webbrowser.open_new_tab(analyzer_url)
+        st.success(f"Network Log Analyzer opened in a new window at {analyzer_url}")
     
     st.markdown("---")
     
@@ -687,8 +690,9 @@ with tab4:
     if st.button("Launch Network Log Analyzer", type="primary", key="launch_analyzer"):
         # Open in a new window automatically
         import webbrowser
-        webbrowser.open_new_tab("http://localhost:8001")
-        st.success("Network Log Analyzer opened in a new window")
+        analyzer_url = st.session_state.get("analyzer_url", "https://genai-network-analyzer.onrender.com/")
+        webbrowser.open_new_tab(analyzer_url)
+        st.success(f"Network Log Analyzer opened in a new window at {analyzer_url}")
     
     # Add some information about the analyzer
     st.markdown("### Features")
@@ -729,7 +733,9 @@ with tab5:
     
     # Log Analyzer settings
     st.markdown("### Log Analyzer Settings")
-    st.text_input("Log Analyzer URL", value="http://localhost:8001")
+    analyzer_url = st.text_input("Log Analyzer URL", value="https://genai-network-analyzer.onrender.com/", key="analyzer_url_input")
+    # Store the URL in session state for the button to use
+    st.session_state.analyzer_url = analyzer_url
     
     # Save settings button
     if st.button("Save Settings"):
