@@ -38,15 +38,57 @@ st.markdown("""
         font-weight: bold;
     }
     .attack-card {
-        background-color: #f0f2f6;
+        background-color: var(--background-color);
+        color: var(--text-color);
         padding: 20px;
         border-radius: 10px;
         margin-bottom: 20px;
+        border: 1px solid rgba(128, 128, 128, 0.2);
     }
     .attack-title {
         font-size: 1.2rem;
         font-weight: bold;
         margin-bottom: 10px;
+        color: #1E88E5;
+    }
+    
+    /* Dark mode support */
+    @media (prefers-color-scheme: dark) {
+        :root {
+            --background-color: #2b2b2b;
+            --text-color: #ffffff;
+        }
+        .attack-card {
+            background-color: #2b2b2b;
+            color: #ffffff;
+        }
+        .attack-card p, .attack-card ul, .attack-card li {
+            color: #ffffff !important;
+        }
+    }
+    
+    /* Light mode support */
+    @media (prefers-color-scheme: light) {
+        :root {
+            --background-color: #f0f2f6;
+            --text-color: #000000;
+        }
+        .attack-card {
+            background-color: #f0f2f6;
+            color: #000000;
+        }
+        .attack-card p, .attack-card ul, .attack-card li {
+            color: #000000 !important;
+        }
+    }
+    
+    /* Ensure text is always visible regardless of theme */
+    .attack-card p, .attack-card ul, .attack-card li {
+        color: inherit;
+    }
+    .attack-card strong {
+        font-weight: bold;
+        color: inherit;
     }
 </style>
 """, unsafe_allow_html=True)
