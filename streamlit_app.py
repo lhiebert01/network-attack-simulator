@@ -38,12 +38,13 @@ st.markdown("""
         font-weight: bold;
     }
     .attack-card {
-        background-color: var(--background-color);
-        color: var(--text-color);
+        background-color: var(--background-color, #f0f2f6);
+        color: var(--text-color, #000000);
         padding: 20px;
         border-radius: 10px;
         margin-bottom: 20px;
         border: 1px solid rgba(128, 128, 128, 0.2);
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     }
     .attack-title {
         font-size: 1.2rem;
@@ -89,6 +90,17 @@ st.markdown("""
     .attack-card strong {
         font-weight: bold;
         color: inherit;
+    }
+    
+    /* Additional theme-aware styles for better visibility */
+    html[data-theme="dark"] .attack-card {
+        background-color: #2b2b2b;
+        color: #ffffff;
+    }
+    
+    html[data-theme="light"] .attack-card {
+        background-color: #f0f2f6;
+        color: #000000;
     }
 </style>
 """, unsafe_allow_html=True)
