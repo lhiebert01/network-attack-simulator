@@ -1,0 +1,236 @@
+<!-- templates/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Network Attack Simulator & Detector - Updated</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-shield-alt"></i> Network Attack Simulator & Detector</h1>
+            <p>Simulate common network attacks and see how they are detected</p>
+        </header>
+
+        <main>
+            <div class="controls-section">
+                <div class="card">
+                    <h2><i class="fas fa-cogs"></i> Control Panel</h2>
+                    
+                    <div class="control-group">
+                        <h3>Simulation Control</h3>
+                        <div class="button-group">
+                            <button id="start-simulation" class="btn primary"><i class="fas fa-play"></i> Start Simulation</button>
+                            <button id="stop-simulation" class="btn danger"><i class="fas fa-stop"></i> Stop Simulation</button>
+                        </div>
+                        <div id="simulation-status" class="status">Status: Not Running</div>
+                    </div>
+                    
+                    <div class="control-group">
+                        <h3>Attack Simulation</h3>
+                        <div class="form-group">
+                            <label for="target-ip">Target IP:</label>
+                            <input type="text" id="target-ip" value="127.0.0.1">
+                        </div>
+                        <div class="form-group">
+                            <label for="attack-type">Attack Type:</label>
+                            <div class="select-wrapper">
+                                <select id="attack-type">
+                                    <option value="port_scan">Port Scan</option>
+                                    <option value="dos">Denial of Service</option>
+                                    <option value="bruteforce">Brute Force</option>
+                                    <option value="data_exfil">Data Exfiltration</option>
+                                </select>
+                            </div>
+                            <button class="info-button" id="attack-info-btn"><i class="fas fa-info-circle"></i></button>
+                        </div>
+                        
+                        <div id="port-scan-options" class="attack-options">
+                            <div class="form-group">
+                                <label for="scan-type">Scan Type:</label>
+                                <select id="scan-type">
+                                    <option value="SYN">SYN Scan</option>
+                                    <option value="FIN">FIN Scan</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div id="dos-options" class="attack-options hidden">
+                            <div class="form-group">
+                                <label for="packet-count">Packet Count:</label>
+                                <input type="number" id="packet-count" value="10" min="5" max="100">
+                            </div>
+                        </div>
+                        
+                        <div id="bruteforce-options" class="attack-options hidden">
+                            <div class="form-group">
+                                <label for="service-type">Service:</label>
+                                <select id="service-type">
+                                    <option value="ssh">SSH</option>
+                                    <option value="ftp">FTP</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div id="data-exfil-options" class="attack-options hidden">
+                            <!-- No specific options for data exfiltration simulation -->
+                        </div>
+                        
+                        <button id="run-attack" class="btn warning"><i class="fas fa-bug"></i> Run Attack Simulation</button>
+                    </div>
+                    
+                    <div class="control-group">
+                        <h3>Detection Analysis</h3>
+                        <button id="analyze-btn" class="btn info"><i class="fas fa-search"></i> Analyze Detections</button>
+                        <button id="refresh-logs" class="btn secondary"><i class="fas fa-sync"></i> Refresh Logs</button>
+                        <button id="clear-logs" class="btn danger"><i class="fas fa-trash"></i> Clear Logs</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="main-content">
+                <div class="tabs">
+                    <button class="tab-btn active" data-tab="summary-tab">Summary</button>
+                    <button class="tab-btn" data-tab="logs-tab">Logs</button>
+                    <button class="tab-btn" data-tab="visualization-tab">Visualization</button>
+                    <button class="tab-btn" data-tab="genai-tab">GenAI Summary</button>
+                </div>
+
+                <!-- Summary Tab -->
+                <div id="summary-tab" class="tab-content active">
+                    <div class="detection-summary">
+                        <h2>Detection Summary</h2>
+                        <div class="summary-stats">
+                            <div class="stat-item">
+                                <h3>Port Scan</h3>
+                                <p><span id="port-scan-count">0</span> detections</p>
+                            </div>
+                            <div class="stat-item">
+                                <h3>DoS</h3>
+                                <p><span id="dos-count">0</span> detections</p>
+                            </div>
+                            <div class="stat-item">
+                                <h3>Brute Force</h3>
+                                <p><span id="bruteforce-count">0</span> detections</p>
+                            </div>
+                            <div class="stat-item">
+                                <h3>Data Exfiltration</h3>
+                                <p><span id="data-exfil-count">0</span> detections</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Logs Tab -->
+                <div id="logs-tab" class="tab-content">
+                    <div class="log-viewer">
+                        <div class="log-selector">
+                            <label for="log-select">Select Log:</label>
+                            <select id="log-select">
+                                <option value="">-- Select a log file --</option>
+                            </select>
+                        </div>
+                        <div class="log-display-container">
+                            <pre id="log-display">Select a log file to view its contents.</pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Visualization Tab -->
+                <div id="visualization-tab" class="tab-content">
+                    <div class="time-interval-selector">
+                        <label for="time-interval">Time Interval (minutes):</label>
+                        <select id="time-interval">
+                            <option value="1">1 minute</option>
+                            <option value="5" selected>5 minutes</option>
+                            <option value="15">15 minutes</option>
+                            <option value="30">30 minutes</option>
+                            <option value="60">1 hour</option>
+                            <option value="120">2 hours</option>
+                        </select>
+                        <button id="refresh-stats" class="btn">Refresh</button>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="detection-chart"></canvas>
+                    </div>
+                </div>
+
+                <!-- GenAI Summary Tab -->
+                <div id="genai-tab" class="tab-content">
+                    <div class="genai-container">
+                        <div class="genai-description">
+                            <h3>AI-Powered Log Analysis</h3>
+                            <p>Access our Network Log Analyzer tool powered by Google Gemini AI to analyze network logs and get detailed security insights.</p>
+                        </div>
+                        <button id="generate-ai-summary" class="btn">Open Log Analyzer</button>
+                        <div class="genai-result-container">
+                            <div id="genai-result">
+                                <p>Click the button above to open the Network Log Analyzer in a new window.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Attack Explanation Modal -->
+        <div id="explanation-modal" class="modal">
+            <div class="modal-content">
+                <span class="close-modal">&times;</span>
+                <h2 id="modal-title">Attack Explanation</h2>
+                <div id="modal-content">
+                    <!-- Content will be dynamically inserted here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Log Analysis Report Modal -->
+        <div id="log-analysis-modal" class="modal">
+            <div class="modal-content modal-large">
+                <span class="close-modal">&times;</span>
+                <h2>Log Analysis Report</h2>
+                <div id="log-analysis-content">
+                    <!-- Content will be dynamically inserted here -->
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>Network Attack Simulator Dashboard &copy; 2025</p>
+        </footer>
+
+        <!-- JavaScript -->
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+        <script>
+            // Initialize tabs on page load
+            document.addEventListener('DOMContentLoaded', function() {
+                // Tab switching functionality
+                const tabButtons = document.querySelectorAll('.tab-btn');
+                const tabContents = document.querySelectorAll('.tab-content');
+                
+                tabButtons.forEach(button => {
+                    button.addEventListener('click', function() {
+                        // Remove active class from all buttons and contents
+                        tabButtons.forEach(btn => btn.classList.remove('active'));
+                        tabContents.forEach(content => content.classList.remove('active'));
+                        
+                        // Add active class to clicked button and corresponding content
+                        this.classList.add('active');
+                        const tabId = this.getAttribute('data-tab');
+                        document.getElementById(tabId).classList.add('active');
+                        
+                        // Update visualization if needed
+                        if (tabId === 'visualization-tab') {
+                            updateStats();
+                        }
+                    });
+                });
+            });
+        </script>
+    </body>
+</html>

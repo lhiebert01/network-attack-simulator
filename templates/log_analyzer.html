@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Network Log Analyzer</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            max-width: 1200px;
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .result {
+            margin-top: 20px;
+            padding: 20px;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            background-color: #f8f9fa;
+            white-space: pre-wrap;
+        }
+        h1 {
+            color: #0d6efd;
+            margin-bottom: 30px;
+        }
+        .loader {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #0d6efd;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 2s linear infinite;
+            margin: 20px auto;
+            display: none;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        #modelInfo {
+            font-size: 0.8em;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Network Log Analyzer</h1>
+        <p class="lead">Analyze network logs using Google Gemini AI to identify security threats and anomalies</p>
+        
+        <form id="analyzeForm">
+            <div class="mb-3">
+                <label for="modelSelect" class="form-label">Gemini Model</label>
+                <select class="form-select" id="modelSelect" name="model">
+                    <!-- Will be populated via JavaScript -->
+                </select>
+                <div id="modelInfo" class="form-text"></div>
+            </div>
+            
+            <div class="mb-3">
+                <label for="logData" class="form-label">Network Log Data</label>
+                <textarea class="form-control" id="logData" name="log_data" rows="10" required></textarea>
+            </div>
+            
+            <button type="submit" class="btn btn-primary" id="analyzeButton">Analyze Log Data</button>
+            <button type="button" class="btn btn-secondary" id="loadExample">Load Example</button>
+        </form>
+        
+        <div class="loader" id="loader"></div>
+        
+        <div class="result" id="resultSection" style="display: none;">
+            <h4>Analysis Result</h4>
+            <div id="analysisResult"></div>
+            <div id="modelUsed" class="mt-3 text-muted"></div>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // DOM elements
+            const modelSelect = document.getElementById('modelSelect');
+            const logDataTextarea = document.getElementById('logData');
+            const analyzeButton = document.getElementById('analyzeButton');
+            const loadExampleButton = document.getElementById('loadExample');
+            const loader = document.getElementById('loader');
+            const resultSection = document.getElementById('resultSection');
+            const analysisResult = document.getElementById('analysisResult');
+            const modelUsed = document.getElementById('modelUsed');
+            const modelInfo = document.getElementById('modelInfo');
+            
+            // Fetch available models
+            fetch('/models')
+                .then(response => response.json())
+                .then(models => {
+                    // Clear any existing options
+                    modelSelect.innerHTML = '';
+                    
+                    // Add each model to the dropdown
+                    models.forEach(model => {
+                        const option = document.createElement('option');
+                        option.value = model.id;
+                        option.textContent = `${model.name} - ${model.description}`;
+                        modelSelect.appendChild(option);
+                    });
+                    
+                    // Update model info when selection changes
+                    modelSelect.addEventListener('change', function() {
+                        const selectedOption = this.options[this.selectedIndex];
+                        if (selectedOption) {
+                            const description = selectedOption.textContent.split(' - ')[1];
+                            modelInfo.textContent = description || '';
+                        }
+                    });
+                    
+                    // Trigger change event to set initial description
+                    if (modelSelect.options.length > 0) {
+                        const description = modelSelect.options[0].textContent.split(' - ')[1];
+                        modelInfo.textContent = description || '';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching models:', error);
+                    modelInfo.textContent = 'Error loading models. Please refresh the page.';
+                });
+            
+            // Load example data
+            loadExampleButton.addEventListener('click', function() {
+                logDataTextarea.value = `# Fields: ts uid id.orig_h id.resp_h proto syn_count anomaly_type severity
+1741512939.24567 Zeek456Yh 192.168.1.100 127.0.0.3 tcp 10 SYN_Flood Critical
+# Alert: SYN packet flood detected from 192.168.1.100`;
+            });
+            
+            // Handle form submission
+            document.getElementById('analyzeForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const logData = logDataTextarea.value.trim();
+                const modelId = modelSelect.value;
+                
+                if (!logData) {
+                    alert('Please enter log data to analyze');
+                    return;
+                }
+                
+                // Show loader and hide results
+                loader.style.display = 'block';
+                resultSection.style.display = 'none';
+                
+                // Create form data
+                const formData = new FormData();
+                formData.append('log_data', logData);
+                formData.append('model_id', modelId);
+                
+                // Send request
+                fetch('/analyze', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // Hide loader
+                    loader.style.display = 'none';
+                    
+                    // Show results
+                    analysisResult.textContent = data.analysis;
+                    modelUsed.textContent = `Analyzed with: models/${data.model_used} (${data.provider})`;
+                    resultSection.style.display = 'block';
+                })
+                .catch(error => {
+                    // Hide loader
+                    loader.style.display = 'none';
+                    
+                    console.error('Error:', error);
+                    alert('An error occurred during analysis. Please try again.');
+                });
+            });
+        });
+    </script>
+</body>
+</html>
