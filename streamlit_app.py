@@ -75,12 +75,12 @@ with st.sidebar:
         st.session_state.last_update = datetime.now()
         st.session_state.attack_logs = []
         st.success("Simulation started successfully!")
-        st.experimental_rerun()
+        st.rerun()
     
     if st.button("Stop Simulation", type="secondary", disabled=not st.session_state.simulation_active):
         st.session_state.simulation_active = False
         st.warning("Simulation stopped")
-        st.experimental_rerun()
+        st.rerun()
     
     # Display simulation status
     status_text = "Running" if st.session_state.simulation_active else "Not Running"
@@ -382,4 +382,4 @@ with tab4:
 
 # Footer
 st.markdown("---")
-st.markdown("Network Attack Simulator | Educational Tool | © 2025")
+st.markdown("Network Attack Simulator | Educational Tool | 2025")
